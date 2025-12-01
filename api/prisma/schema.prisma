@@ -1,0 +1,108 @@
+// Prisma schema matching docs/06-SQL-Physical-Model/physical.sql
+// PostgreSQL for production (Vercel Postgres / Neon / Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  userId             Int       @id @default(autoincrement()) @map("user_id")
+  email              String    @unique @db.VarChar(255)
+  name               String?   @db.VarChar(100)
+  timezone           String?   @db.VarChar(50)
+  dietaryTags        String?   @map("dietary_tags") @db.VarChar(255)
+  allergies          String?   @db.VarChar(500)
+  reminderWindowDays Int?      @default(3) @map("reminder_window_days")
+  notifyEmail        Boolean?  @default(true) @map("notify_email")
+  notifyPush         Boolean?  @default(true) @map("notify_push")
+  notifyExpiring     Boolean?  @default(true) @map("notify_expiring")
+  notifyLowStock     Boolean?  @default(true) @map("notify_low_stock")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime? @updatedAt @map("updated_at")
+
+  pantryItems  PantryItem[]
+  groceryLists GroceryList[]
+  mealIdeas    MealIdea[]
+
+  @@map("user")
+}
+
+model PantryItem {
+  pantryItemId   Int       @id @default(autoincrement()) @map("pantry_item_id")
+  userId         Int       @map("user_id")
+  name           String    @db.VarChar(255)
+  quantity       Decimal?  @db.Decimal(10, 2)
+  unit           String?   @db.VarChar(50)
+  category       String?   @db.VarChar(100)
+  expirationDate DateTime? @map("expiration_date") @db.Date
+  source         String?   @db.VarChar(100)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  user             User              @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  notifications    Notification[]
+  groceryListItems GroceryListItem[]
+
+  @@map("pantry_item")
+}
+
+model GroceryList {
+  groceryListId Int      @id @default(autoincrement()) @map("grocery_list_id")
+  userId        Int      @map("user_id")
+  title         String   @db.VarChar(255)
+  status        String?  @db.VarChar(50)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user  User              @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  items GroceryListItem[]
+
+  @@map("grocery_list")
+}
+
+model GroceryListItem {
+  groceryListItemId Int      @id @default(autoincrement()) @map("grocery_list_item_id")
+  groceryListId     Int      @map("grocery_list_id")
+  pantryItemId      Int?     @map("pantry_item_id")
+  name              String   @db.VarChar(255)
+  quantity          Decimal? @db.Decimal(10, 2)
+  unit              String?  @db.VarChar(50)
+  category          String?  @db.VarChar(100)
+  note              String?  @db.VarChar(1000)
+  isChecked         Boolean? @default(false) @map("is_checked")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  groceryList GroceryList @relation(fields: [groceryListId], references: [groceryListId], onDelete: Cascade)
+  pantryItem  PantryItem? @relation(fields: [pantryItemId], references: [pantryItemId], onDelete: SetNull)
+
+  @@map("grocery_list_item")
+}
+
+model MealIdea {
+  mealIdeaId Int      @id @default(autoincrement()) @map("meal_idea_id")
+  userId     Int      @map("user_id")
+  title      String   @db.VarChar(255)
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@map("meal_idea")
+}
+
+model Notification {
+  notificationId Int       @id @default(autoincrement()) @map("notification_id")
+  pantryItemId   Int       @map("pantry_item_id")
+  scheduledFor   DateTime? @map("scheduled_for")
+  sentAt         DateTime? @map("sent_at")
+  status         String?   @db.VarChar(50)
+
+  pantryItem PantryItem @relation(fields: [pantryItemId], references: [pantryItemId], onDelete: Cascade)
+
+  @@map("notification")
+}

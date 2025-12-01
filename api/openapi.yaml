@@ -1,0 +1,885 @@
+openapi: 3.0.3
+info:
+  title: Smart Grocery & Meal Planner API
+  description: |
+    MVP API for managing pantry inventory, grocery lists, meal ideas, and expiration notifications.
+    
+    ## Features
+    - **Inventory Management**: CRUD operations for pantry items with low-stock and expiring-soon flags
+    - **Grocery Lists**: Create and manage shopping lists, auto-add low stock or expiring items
+    - **Meal Ideas**: Get suggestions based on pantry contents, save favorite meals
+    - **Notifications**: Schedule reminders for expiring items
+  version: 1.0.0
+  contact:
+    name: Smart Grocery Team
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+tags:
+  - name: Users
+    description: User management
+  - name: Pantry
+    description: Pantry inventory management
+  - name: Grocery Lists
+    description: Shopping list management
+  - name: Meals
+    description: Meal ideas and suggestions
+  - name: Notifications
+    description: Expiration reminders
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  # Users
+  /api/users:
+    get:
+      tags: [Users]
+      summary: List all users
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+    post:
+      tags: [Users]
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUser'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Email already exists
+
+  /api/users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Users]
+      summary: Get user by ID
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Users]
+      summary: Update user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+      responses:
+        '200':
+          description: User updated
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Users]
+      summary: Delete user
+      responses:
+        '200':
+          description: User deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Pantry
+  /api/pantry:
+    get:
+      tags: [Pantry]
+      summary: List pantry items for a user
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of pantry items with computed flags
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PantryItemListResponse'
+    post:
+      tags: [Pantry]
+      summary: Create pantry item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePantryItem'
+      responses:
+        '201':
+          description: Item created
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/pantry/expiring:
+    get:
+      tags: [Pantry]
+      summary: Get items expiring soon
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 7
+      responses:
+        '200':
+          description: Expiring items
+
+  /api/pantry/low-stock:
+    get:
+      tags: [Pantry]
+      summary: Get low stock items
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Low stock items
+
+  /api/pantry/categories:
+    get:
+      tags: [Pantry]
+      summary: Get unique categories
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of categories
+
+  /api/pantry/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Pantry]
+      summary: Get pantry item
+      responses:
+        '200':
+          description: Pantry item
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Pantry]
+      summary: Update pantry item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePantryItem'
+      responses:
+        '200':
+          description: Item updated
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Pantry]
+      summary: Delete pantry item
+      responses:
+        '200':
+          description: Item deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Grocery Lists
+  /api/grocery-lists:
+    get:
+      tags: [Grocery Lists]
+      summary: List grocery lists
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, archived]
+      responses:
+        '200':
+          description: List of grocery lists
+    post:
+      tags: [Grocery Lists]
+      summary: Create grocery list
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroceryList'
+      responses:
+        '201':
+          description: List created
+
+  /api/grocery-lists/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Grocery Lists]
+      summary: Get grocery list with items
+      responses:
+        '200':
+          description: Grocery list
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Grocery Lists]
+      summary: Update grocery list
+      responses:
+        '200':
+          description: List updated
+    delete:
+      tags: [Grocery Lists]
+      summary: Delete grocery list
+      responses:
+        '200':
+          description: List deleted
+
+  /api/grocery-lists/{id}/items:
+    post:
+      tags: [Grocery Lists]
+      summary: Add item to list
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroceryListItem'
+      responses:
+        '201':
+          description: Item added
+
+  /api/grocery-lists/{listId}/items/{itemId}:
+    parameters:
+      - name: listId
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      tags: [Grocery Lists]
+      summary: Update list item (check/uncheck)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGroceryListItem'
+      responses:
+        '200':
+          description: Item updated
+    delete:
+      tags: [Grocery Lists]
+      summary: Remove item from list
+      responses:
+        '200':
+          description: Item removed
+
+  /api/grocery-lists/{id}/add-expiring:
+    post:
+      tags: [Grocery Lists]
+      summary: Auto-add expiring pantry items to list
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 7
+      responses:
+        '200':
+          description: Items added
+
+  /api/grocery-lists/{id}/add-low-stock:
+    post:
+      tags: [Grocery Lists]
+      summary: Auto-add low stock items to list
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Items added
+
+  # Meals
+  /api/meals/suggest:
+    post:
+      tags: [Meals]
+      summary: Get AI meal suggestions based on pantry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: integer
+                additionalPreferences:
+                  type: string
+      responses:
+        '200':
+          description: Meal suggestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealSuggestionsResponse'
+
+  /api/meals:
+    get:
+      tags: [Meals]
+      summary: List saved meal ideas
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of saved meals
+    post:
+      tags: [Meals]
+      summary: Save a meal idea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMealIdea'
+      responses:
+        '201':
+          description: Meal saved
+
+  /api/meals/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Meals]
+      summary: Get meal idea
+      responses:
+        '200':
+          description: Meal idea
+    put:
+      tags: [Meals]
+      summary: Update meal idea
+      responses:
+        '200':
+          description: Meal updated
+    delete:
+      tags: [Meals]
+      summary: Delete meal idea
+      responses:
+        '200':
+          description: Meal deleted
+
+  # Notifications
+  /api/notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications for user
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, sent, cancelled]
+      responses:
+        '200':
+          description: List of notifications
+    post:
+      tags: [Notifications]
+      summary: Create notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotification'
+      responses:
+        '201':
+          description: Notification created
+
+  /api/notifications/pending:
+    get:
+      tags: [Notifications]
+      summary: Get pending notifications that are due
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Due notifications
+
+  /api/notifications/auto-schedule:
+    post:
+      tags: [Notifications]
+      summary: Auto-schedule notifications for expiring items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: integer
+      responses:
+        '200':
+          description: Notifications scheduled
+
+  /api/notifications/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Notifications]
+      summary: Get notification
+      responses:
+        '200':
+          description: Notification
+    put:
+      tags: [Notifications]
+      summary: Update notification
+      responses:
+        '200':
+          description: Notification updated
+    delete:
+      tags: [Notifications]
+      summary: Delete notification
+      responses:
+        '200':
+          description: Notification deleted
+
+  /api/notifications/{id}/mark-sent:
+    put:
+      tags: [Notifications]
+      summary: Mark notification as sent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Marked as sent
+
+  /api/notifications/{id}/cancel:
+    put:
+      tags: [Notifications]
+      summary: Cancel notification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Notification cancelled
+
+components:
+  schemas:
+    # User schemas
+    CreateUser:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          maxLength: 100
+        timezone:
+          type: string
+          maxLength: 50
+        dietaryTags:
+          type: string
+          maxLength: 255
+        reminderWindowDays:
+          type: integer
+          minimum: 1
+          maximum: 30
+
+    UpdateUser:
+      type: object
+      properties:
+        name:
+          type: string
+        timezone:
+          type: string
+        dietaryTags:
+          type: string
+        reminderWindowDays:
+          type: integer
+
+    UserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/User'
+
+    UserListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        userId:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        timezone:
+          type: string
+        dietaryTags:
+          type: string
+        reminderWindowDays:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    # Pantry schemas
+    CreatePantryItem:
+      type: object
+      required: [userId, name]
+      properties:
+        userId:
+          type: integer
+        name:
+          type: string
+          maxLength: 255
+        quantity:
+          type: number
+        unit:
+          type: string
+          maxLength: 50
+        category:
+          type: string
+          maxLength: 100
+        expirationDate:
+          type: string
+          format: date
+        source:
+          type: string
+          maxLength: 100
+
+    UpdatePantryItem:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        category:
+          type: string
+        expirationDate:
+          type: string
+          format: date
+
+    PantryItem:
+      type: object
+      properties:
+        pantryItemId:
+          type: integer
+        userId:
+          type: integer
+        name:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        category:
+          type: string
+        expirationDate:
+          type: string
+          format: date
+        source:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        isExpiringSoon:
+          type: boolean
+        isLowStock:
+          type: boolean
+        daysUntilExpiry:
+          type: integer
+
+    PantryItemListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PantryItem'
+
+    # Grocery List schemas
+    CreateGroceryList:
+      type: object
+      required: [userId, title]
+      properties:
+        userId:
+          type: integer
+        title:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+          enum: [active, completed, archived]
+          default: active
+
+    CreateGroceryListItem:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        category:
+          type: string
+        note:
+          type: string
+        pantryItemId:
+          type: integer
+
+    UpdateGroceryListItem:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        note:
+          type: string
+        isChecked:
+          type: boolean
+
+    # Meal schemas
+    CreateMealIdea:
+      type: object
+      required: [userId, title]
+      properties:
+        userId:
+          type: integer
+        title:
+          type: string
+          maxLength: 255
+        notes:
+          type: string
+          maxLength: 2000
+
+    MealSuggestionsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            suggestions:
+              type: array
+              items:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  ingredients:
+                    type: array
+                    items:
+                      type: string
+                  instructions:
+                    type: string
+
+    # Notification schemas
+    CreateNotification:
+      type: object
+      required: [pantryItemId, scheduledFor]
+      properties:
+        pantryItemId:
+          type: integer
+        scheduledFor:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, sent, cancelled]
+          default: pending
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  details:
+                    type: array
+                    items:
+                      type: object
+

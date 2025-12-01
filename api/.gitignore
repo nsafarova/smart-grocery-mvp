@@ -1,16 +1,13 @@
 # Dependencies
 node_modules/
 
-# Build outputs
+# Build output
 dist/
-.next/
-out/
 
-# Environment files
+# Environment
 .env
 .env.local
 .env.*.local
-.env.production
 
 # Database
 *.db
@@ -31,11 +28,6 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Vercel
-.vercel
-
-# Test coverage
+# Test
 coverage/
 
-# Prisma
-prisma/migrations/**/migration_lock.toml
