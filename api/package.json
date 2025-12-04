@@ -1,6 +1,6 @@
 {
   "name": "smart-grocery-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Smart Grocery & Meal Planner API - Express + Prisma + PostgreSQL",
   "main": "dist/index.js",
   "scripts": {
