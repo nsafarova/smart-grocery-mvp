@@ -2,22 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import { api, Notification } from '@/lib/api';
+import { useUser } from '@/contexts/UserContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
-const USER_ID = 1;
-
-export default function AlertsPage() {
+function AlertsPageContent() {
+  const { user } = useUser();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
 
   useEffect(() => {
-    loadNotifications();
-  }, [activeTab]);
+    if (user) {
+      loadNotifications();
+    }
+  }, [activeTab, user]);
 
   const loadNotifications = async () => {
+    if (!user) return;
     setLoading(true);
     try {
-      const data = await api.getNotifications(USER_ID);
+      const data = await api.getNotifications(user.userId);
       if (activeTab === 'pending') {
         setNotifications(data.filter(n => n.status === 'pending'));
       } else {
@@ -49,8 +53,9 @@ export default function AlertsPage() {
   };
 
   const autoSchedule = async () => {
+    if (!user) return;
     try {
-      const result = await api.autoScheduleNotifications(USER_ID);
+      const result = await api.autoScheduleNotifications(user.userId);
       alert(result.message);
       loadNotifications();
     } catch (error) {
@@ -203,4 +208,13 @@ export default function AlertsPage() {
     </>
   );
 }
+
+export default function AlertsPage() {
+  return (
+    <ProtectedRoute>
+      <AlertsPageContent />
+    </ProtectedRoute>
+  );
+}
+
 

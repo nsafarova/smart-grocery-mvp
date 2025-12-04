@@ -40,8 +40,9 @@ app.use(errorHandler);
 
 // Only listen when not in Vercel serverless environment
 if (process.env.VERCEL !== '1') {
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Smart Grocery API running on http://localhost:${PORT}`);
+    console.log(`📱 Also accessible at http://10.0.0.78:${PORT} (for mobile devices)`);
   });
 }
 

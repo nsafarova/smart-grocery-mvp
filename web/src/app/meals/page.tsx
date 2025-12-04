@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { api, MealSuggestion, MealIdea } from '@/lib/api';
 import Modal from '@/components/Modal';
+import { useUser } from '@/contexts/UserContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
-const USER_ID = 1;
-
-export default function MealsPage() {
+function MealsPageContent() {
+  const { user } = useUser();
   const [suggestions, setSuggestions] = useState<MealSuggestion[]>([]);
   const [savedMeals, setSavedMeals] = useState<MealIdea[]>([]);
   const [loading, setLoading] = useState(false);
@@ -16,12 +17,15 @@ export default function MealsPage() {
   const [mealToSave, setMealToSave] = useState<MealSuggestion | null>(null);
 
   useEffect(() => {
-    loadSavedMeals();
-  }, []);
+    if (user) {
+      loadSavedMeals();
+    }
+  }, [user]);
 
   const loadSavedMeals = async () => {
+    if (!user) return;
     try {
-      const meals = await api.getSavedMeals(USER_ID);
+      const meals = await api.getSavedMeals(user.userId);
       setSavedMeals(meals);
     } catch (error) {
       console.error('Failed to load saved meals:', error);
@@ -29,9 +33,10 @@ export default function MealsPage() {
   };
 
   const getSuggestions = async () => {
+    if (!user) return;
     setLoading(true);
     try {
-      const result = await api.getMealSuggestions(USER_ID, preferences || undefined);
+      const result = await api.getMealSuggestions(user.userId, preferences || undefined);
       setSuggestions(result.suggestions);
     } catch (error) {
       console.error('Failed to get suggestions:', error);
@@ -50,8 +55,9 @@ export default function MealsPage() {
     if (!mealToSave) return;
     
     try {
+      if (!user) return;
       const saved = await api.saveMealIdea({
-        userId: USER_ID,
+        userId: user.userId,
         title: mealToSave.title,
         notes: `Ingredients: ${mealToSave.ingredients.join(', ')}\n\nInstructions: ${mealToSave.instructions}`,
       });
@@ -265,6 +271,14 @@ export default function MealsPage() {
         )}
       </Modal>
     </>
+  );
+}
+
+export default function MealsPage() {
+  return (
+    <ProtectedRoute>
+      <MealsPageContent />
+    </ProtectedRoute>
   );
 }
 

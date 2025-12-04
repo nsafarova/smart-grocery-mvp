@@ -5,15 +5,16 @@ import { useSearchParams } from 'next/navigation';
 import { api, PantryItem } from '@/lib/api';
 import PantryItemCard from '@/components/PantryItemCard';
 import Modal from '@/components/Modal';
-
-const USER_ID = 1;
+import { useUser } from '@/contexts/UserContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 const CATEGORIES = [
   'Produce', 'Dairy', 'Meat', 'Seafood', 'Grains', 
   'Canned Goods', 'Frozen', 'Beverages', 'Snacks', 'Condiments', 'Spices', 'Bakery'
 ];
 
-export default function PantryPage() {
+function PantryPageContent() {
+  const { user } = useUser();
   const searchParams = useSearchParams();
   const filter = searchParams.get('filter');
   
@@ -33,18 +34,19 @@ export default function PantryPage() {
   });
 
   const loadItems = useCallback(async () => {
+    if (!user) return;
     setLoading(true);
     try {
       let data: PantryItem[];
       
       if (activeFilter === 'expiring') {
-        const result = await api.getExpiringItems(USER_ID, 7);
+        const result = await api.getExpiringItems(user.userId, 7);
         data = result.items;
       } else if (activeFilter === 'low') {
-        const result = await api.getLowStockItems(USER_ID);
+        const result = await api.getLowStockItems(user.userId);
         data = result.items;
       } else {
-        data = await api.getPantryItems(USER_ID);
+        data = await api.getPantryItems(user.userId);
       }
       
       setItems(data);
@@ -98,7 +100,8 @@ export default function PantryPage() {
       if (editingItem) {
         await api.updatePantryItem(editingItem.pantryItemId, data);
       } else {
-        await api.createPantryItem({ ...data, userId: USER_ID, name: data.name });
+        if (!user) return;
+        await api.createPantryItem({ ...data, userId: user.userId, name: data.name });
       }
       
       setShowModal(false);
@@ -268,4 +271,13 @@ export default function PantryPage() {
     </>
   );
 }
+
+export default function PantryPage() {
+  return (
+    <ProtectedRoute>
+      <PantryPageContent />
+    </ProtectedRoute>
+  );
+}
+
 

@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, PantryItem } from '@/lib/api';
-
-const USER_ID = 1; // Demo user
+import { useUser } from '@/contexts/UserContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 interface DashboardStats {
   totalItems: number;
@@ -14,20 +14,24 @@ interface DashboardStats {
   lowStockItems: PantryItem[];
 }
 
-export default function HomePage() {
+function HomePageContent() {
+  const { user } = useUser();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
+    if (user) {
+      loadDashboard();
+    }
+  }, [user]);
 
   const loadDashboard = async () => {
+    if (!user) return;
     try {
       const [pantryItems, expiring, lowStock] = await Promise.all([
-        api.getPantryItems(USER_ID),
-        api.getExpiringItems(USER_ID, 7),
-        api.getLowStockItems(USER_ID),
+        api.getPantryItems(user.userId),
+        api.getExpiringItems(user.userId, 7),
+        api.getLowStockItems(user.userId),
       ]);
 
       setStats({
@@ -66,7 +70,9 @@ export default function HomePage() {
   return (
     <>
       <header className="page-header">
-        <h1 className="page-title">Good morning! 👋</h1>
+        <h1 className="page-title">
+          Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! 👋
+        </h1>
         <p className="page-subtitle">Here's what's in your kitchen</p>
       </header>
 
@@ -202,5 +208,13 @@ export default function HomePage() {
         </section>
     </div>
     </>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <ProtectedRoute>
+      <HomePageContent />
+    </ProtectedRoute>
   );
 }

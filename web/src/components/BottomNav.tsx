@@ -14,6 +14,11 @@ const navItems = [
 export default function BottomNav() {
   const pathname = usePathname();
 
+  // Hide nav on login page
+  if (pathname === '/login') {
+    return null;
+  }
+
   return (
     <nav className="bottom-nav">
       {navItems.map((item) => {

@@ -100,6 +100,40 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+// POST /api/users/login - Login with email
+router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email || typeof email !== 'string') {
+      throw createError('Email is required', 400);
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: email.trim().toLowerCase() },
+    });
+
+    if (!user) {
+      throw createError('User not found', 404);
+    }
+
+    // Return user data (in a real app, you'd return a token)
+    res.json({ 
+      success: true, 
+      data: {
+        userId: user.userId,
+        email: user.email,
+        name: user.name,
+        timezone: user.timezone,
+        dietaryTags: user.dietaryTags,
+        allergies: user.allergies,
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // DELETE /api/users/:id - Delete user
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -120,4 +154,5 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
 });
 
 export default router;
+
 

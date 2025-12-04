@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { api, GroceryList, GroceryListItem } from '@/lib/api';
 import Modal from '@/components/Modal';
+import { useUser } from '@/contexts/UserContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
-const USER_ID = 1;
-
-export default function GroceryPage() {
+function GroceryPageContent() {
+  const { user } = useUser();
   const [lists, setLists] = useState<GroceryList[]>([]);
   const [activeList, setActiveList] = useState<GroceryList | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,12 +19,15 @@ export default function GroceryPage() {
   const [newItemUnit, setNewItemUnit] = useState('');
 
   useEffect(() => {
-    loadLists();
-  }, []);
+    if (user) {
+      loadLists();
+    }
+  }, [user]);
 
   const loadLists = async () => {
+    if (!user) return;
     try {
-      const data = await api.getGroceryLists(USER_ID);
+      const data = await api.getGroceryLists(user.userId);
       setLists(data);
       
       // Auto-select first active list
@@ -54,7 +58,7 @@ export default function GroceryPage() {
 
     try {
       const newList = await api.createGroceryList({ 
-        userId: USER_ID, 
+        userId: user!.userId, 
         title: newListTitle.trim() 
       });
       setNewListTitle('');
@@ -132,7 +136,8 @@ export default function GroceryPage() {
     if (!activeList) return;
     
     try {
-      const result = await api.addExpiringToList(activeList.groceryListId, USER_ID);
+      if (!user) return;
+      const result = await api.addExpiringToList(activeList.groceryListId, user.userId);
       alert(result.message);
       const updatedList = await api.getGroceryList(activeList.groceryListId);
       setActiveList(updatedList);
@@ -145,7 +150,8 @@ export default function GroceryPage() {
     if (!activeList) return;
     
     try {
-      const result = await api.addLowStockToList(activeList.groceryListId, USER_ID);
+      if (!user) return;
+      const result = await api.addLowStockToList(activeList.groceryListId, user.userId);
       alert(result.message);
       const updatedList = await api.getGroceryList(activeList.groceryListId);
       setActiveList(updatedList);
@@ -367,4 +373,13 @@ export default function GroceryPage() {
     </>
   );
 }
+
+export default function GroceryPage() {
+  return (
+    <ProtectedRoute>
+      <GroceryPageContent />
+    </ProtectedRoute>
+  );
+}
+
 

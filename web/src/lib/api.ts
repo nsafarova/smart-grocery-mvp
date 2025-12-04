@@ -109,6 +109,11 @@ export const api = {
   // Users
   getUsers: () => fetchApi<User[]>('/api/users'),
   getUser: (id: number) => fetchApi<User>(`/api/users/${id}`),
+  login: (email: string) => 
+    fetchApi<{ userId: number; email: string; name: string | null; timezone: string | null; dietaryTags: string | null; allergies: string | null }>('/api/users/login', { 
+      method: 'POST', 
+      body: JSON.stringify({ email }) 
+    }),
   createUser: (data: Partial<User>) => 
     fetchApi<User>('/api/users', { method: 'POST', body: JSON.stringify(data) }),
   updateUser: (id: number, data: Partial<User>) => 

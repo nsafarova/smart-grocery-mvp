@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { api, User } from '@/lib/api';
-
-const USER_ID = 1;
+import { useUser } from '@/contexts/UserContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 const DIETARY_OPTIONS = [
   { id: 'vegetarian', label: '🥬 Vegetarian', desc: 'No meat or fish' },
@@ -42,7 +42,8 @@ const TIMEZONES = [
   'Australia/Sydney',
 ];
 
-export default function ProfilePage() {
+function ProfilePageContent() {
+  const { user: currentUser, logout } = useUser();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,12 +63,15 @@ export default function ProfilePage() {
   const [notifyLowStock, setNotifyLowStock] = useState(true);
 
   useEffect(() => {
-    loadUser();
-  }, []);
+    if (currentUser) {
+      loadUser();
+    }
+  }, [currentUser]);
 
   const loadUser = async () => {
+    if (!currentUser) return;
     try {
-      const userData = await api.getUser(USER_ID);
+      const userData = await api.getUser(currentUser.userId);
       setUser(userData);
       
       // Populate form
@@ -116,7 +120,8 @@ export default function ProfilePage() {
     setMessage(null);
     
     try {
-      await api.updateUser(USER_ID, {
+      if (!currentUser) return;
+      await api.updateUser(currentUser.userId, {
         name: name || undefined,
         timezone: timezone || undefined,
         dietaryTags: selectedDiets.join(',') || undefined,
@@ -422,6 +427,17 @@ export default function ProfilePage() {
           {saving ? 'Saving...' : '💾 Save Profile'}
         </button>
 
+        {/* Logout */}
+        <section className="mt-6">
+          <button
+            onClick={logout}
+            className="btn btn-secondary w-full"
+            style={{ background: 'rgba(231, 111, 81, 0.1)', color: 'var(--color-danger)' }}
+          >
+            🚪 Sign Out
+          </button>
+        </section>
+
         {/* App Info */}
         <section className="text-center py-4" style={{ color: 'var(--color-text-muted)' }}>
           <p className="text-sm">SmartPantry v1.0.0</p>
@@ -431,4 +447,13 @@ export default function ProfilePage() {
     </>
   );
 }
+
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfilePageContent />
+    </ProtectedRoute>
+  );
+}
+
 
