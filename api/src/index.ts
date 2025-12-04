@@ -11,7 +11,7 @@ import mealRoutes from './routes/meals.js';
 import notificationRoutes from './routes/notifications.js';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 // Middleware
 app.use(helmet());
