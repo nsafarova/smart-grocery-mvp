@@ -1,12 +1,23 @@
 #!/usr/bin/env node
-// Vercel build script that handles optional DIRECT_URL
+// Vercel build script with connection string validation
 
 const { execSync } = require('child_process');
 
-// Set DIRECT_URL to DATABASE_URL if not provided
-if (!process.env.DIRECT_URL && process.env.DATABASE_URL) {
-  process.env.DIRECT_URL = process.env.DATABASE_URL;
+// Validate DATABASE_URL format
+const dbUrl = process.env.DATABASE_URL;
+if (!dbUrl) {
+  console.error('❌ DATABASE_URL environment variable is not set');
+  process.exit(1);
 }
+
+// Check if it's a valid PostgreSQL URL
+if (!dbUrl.startsWith('postgresql://') && !dbUrl.startsWith('postgres://')) {
+  console.error('❌ DATABASE_URL must start with postgresql:// or postgres://');
+  console.error('Current value:', dbUrl.substring(0, 50) + '...');
+  process.exit(1);
+}
+
+console.log('✅ DATABASE_URL is set and valid');
 
 try {
   console.log('🔨 Generating Prisma Client...');
@@ -28,4 +39,3 @@ try {
   console.error('❌ Build failed:', error.message);
   process.exit(1);
 }
-
