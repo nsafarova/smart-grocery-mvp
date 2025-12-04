@@ -17,7 +17,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src --ext .ts",
-    "vercel-build": "prisma generate && (DIRECT_URL=${DIRECT_URL:-$DATABASE_URL} prisma migrate deploy || prisma db push) && tsc"
+    "vercel-build": "node scripts/vercel-build.js"
   },
   "keywords": ["grocery", "meal-planner", "pantry", "api"],
   "author": "",
