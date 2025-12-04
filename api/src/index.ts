@@ -47,4 +47,8 @@ if (process.env.VERCEL !== '1') {
 }
 
 // Export for Vercel serverless
+// Vercel expects a handler function that receives (req, res)
 export default app;
+
+// Also export as a handler function for better Vercel compatibility
+export const handler = app;
