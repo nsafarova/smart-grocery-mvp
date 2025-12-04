@@ -87,21 +87,45 @@ interface ApiResponse<T> {
 }
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
-
-  const json = await res.json() as ApiResponse<T>;
+  const url = `${API_BASE}${endpoint}`;
   
-  if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'API request failed');
+  // Debug logging in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('API Request:', url, options);
   }
+  
+  try {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
 
-  return json.data;
+    // Check if response is ok before parsing JSON
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('API Error Response:', res.status, errorText);
+      throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+    }
+
+    const json = await res.json() as ApiResponse<T>;
+    
+    if (!json.success) {
+      throw new Error(json.error?.message || 'API request failed');
+    }
+
+    return json.data;
+  } catch (error: any) {
+    // Enhanced error logging
+    console.error('Fetch API Error:', {
+      url,
+      error: error.message,
+      stack: error.stack,
+    });
+    throw error;
+  }
 }
 
 // Users
