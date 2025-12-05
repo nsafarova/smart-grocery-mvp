@@ -240,15 +240,17 @@ function MealsPageContent() {
                           const ingredient = typeof ing === 'string' 
                             ? { name: ing, amount: '', unit: '' }
                             : ing;
+                          const displayText = ingredient.amount && ingredient.unit
+                            ? `${ingredient.amount} ${ingredient.unit} ${ingredient.name}`.trim()
+                            : ingredient.name;
                           return (
                             <span 
                               key={i}
                               className="px-2 py-1 rounded-full text-xs"
                               style={{ background: 'var(--color-bg-muted)' }}
+                              title={displayText}
                             >
-                              {ingredient.amount && ingredient.unit 
-                                ? `${ingredient.amount} ${ingredient.unit} ${ingredient.name}`
-                                : ingredient.name}
+                              {displayText}
                             </span>
                           );
                         })}

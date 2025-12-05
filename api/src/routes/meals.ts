@@ -280,9 +280,29 @@ function generateFallbackSuggestions(
   }
 
   if (hasCarbs && (hasVeggies || hasProtein)) {
+    const comfortIngredients: Ingredient[] = [];
+    const carbName = ingredients.find(i => 
+      ['rice', 'pasta', 'bread', 'potato', 'noodles', 'quinoa'].some(c => 
+        i.toLowerCase().includes(c)
+      )
+    );
+    if (carbName) {
+      comfortIngredients.push({ name: carbName, amount: '2', unit: 'cups cooked' });
+    }
+    if (ingredients.some(i => i.toLowerCase().includes('tomato'))) {
+      comfortIngredients.push({ name: 'tomato', amount: '2', unit: 'medium' });
+    }
+    if (ingredients.some(i => i.toLowerCase().includes('onion'))) {
+      comfortIngredients.push({ name: 'onion', amount: '1', unit: 'medium' });
+    }
+    if (ingredients.some(i => i.toLowerCase().includes('garlic'))) {
+      comfortIngredients.push({ name: 'garlic', amount: '2', unit: 'cloves' });
+    }
+    comfortIngredients.push({ name: 'olive oil', amount: '2', unit: 'tbsp' });
+    
     suggestions.push({
       title: '🍝 Comfort Bowl',
-      ingredients: ingredients.slice(0, 6),
+      ingredients: comfortIngredients.length > 0 ? comfortIngredients : ingredients.slice(0, 6).map(name => ({ name, amount: '', unit: '' })),
       instructions: 'Cook your grain or pasta according to package directions. In a separate pan, sauté vegetables and protein with olive oil and garlic. Combine everything in a bowl, drizzle with sauce of choice, and top with fresh herbs or cheese.',
       cookTime: '30 minutes',
       difficulty: 'Easy'
@@ -291,9 +311,15 @@ function generateFallbackSuggestions(
 
   // Always add a generic suggestion
   if (suggestions.length < 3) {
+    const surpriseIngredients: Ingredient[] = ingredients.slice(0, 5).map((name, idx) => ({
+      name,
+      amount: (idx + 1).toString(),
+      unit: idx === 0 ? 'cup' : idx === 1 ? 'lb' : 'piece'
+    }));
+    
     suggestions.push({
       title: '✨ Chef\'s Surprise',
-      ingredients: ingredients.slice(0, 5),
+      ingredients: surpriseIngredients,
       instructions: 'Get creative! Combine your available ingredients in unexpected ways. Try roasting vegetables, making a quick sauce, or creating a grain bowl with whatever you have on hand.',
       cookTime: '30 minutes',
       difficulty: 'Medium'
