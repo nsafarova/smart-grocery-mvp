@@ -191,15 +191,22 @@ function MealsPageContent() {
                         Ingredients:
                       </div>
                       <div className="flex flex-wrap gap-1">
-                        {meal.ingredients.map((ing, i) => (
-                          <span 
-                            key={i}
-                            className="px-2 py-1 rounded-full text-xs"
-                            style={{ background: 'var(--color-bg-muted)' }}
-                          >
-                            {ing}
-                          </span>
-                        ))}
+                        {meal.ingredients.map((ing, i) => {
+                          const ingredient = typeof ing === 'string' 
+                            ? { name: ing, amount: '', unit: '' }
+                            : ing;
+                          return (
+                            <span 
+                              key={i}
+                              className="px-2 py-1 rounded-full text-xs"
+                              style={{ background: 'var(--color-bg-muted)' }}
+                            >
+                              {ingredient.amount && ingredient.unit 
+                                ? `${ingredient.amount} ${ingredient.unit} ${ingredient.name}`
+                                : ingredient.name}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                     
