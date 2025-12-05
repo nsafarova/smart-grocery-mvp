@@ -1,0 +1,10 @@
+# Ignore dist folder - we only want the api/ folder as serverless functions
+dist/
+src/
+node_modules/
+prisma/
+scripts/
+*.db
+*.sqlite
+.env*
+
