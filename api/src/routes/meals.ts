@@ -166,13 +166,42 @@ function generateFallbackSuggestions(
   const hasDairy = ingredientsLower.some(i => ['milk', 'cheese', 'butter', 'yogurt', 'cream'].some(d => i.includes(d)));
 
   if (hasProtein && hasVeggies && !isVegetarian) {
+    const filteredIngredients = ingredients.filter(i => 
+      ['chicken', 'beef', 'tofu', 'tomato', 'onion', 'pepper', 'carrot', 'garlic', 'rice'].some(x => 
+        i.toLowerCase().includes(x)
+      )
+    );
+    
+    const ingredientList: Ingredient[] = [];
+    const proteinName = filteredIngredients.find(i => 
+      i.toLowerCase().includes('chicken') || 
+      i.toLowerCase().includes('beef') || 
+      i.toLowerCase().includes('tofu')
+    );
+    if (proteinName) {
+      ingredientList.push({ name: proteinName, amount: '1', unit: 'lb' });
+    }
+    if (filteredIngredients.some(i => i.toLowerCase().includes('rice'))) {
+      ingredientList.push({ name: 'rice', amount: '2', unit: 'cups' });
+    }
+    if (filteredIngredients.some(i => i.toLowerCase().includes('onion'))) {
+      ingredientList.push({ name: 'onion', amount: '1', unit: 'medium' });
+    }
+    if (filteredIngredients.some(i => i.toLowerCase().includes('pepper'))) {
+      ingredientList.push({ name: 'bell pepper', amount: '1', unit: 'large' });
+    }
+    if (filteredIngredients.some(i => i.toLowerCase().includes('carrot'))) {
+      ingredientList.push({ name: 'carrot', amount: '2', unit: 'medium' });
+    }
+    if (filteredIngredients.some(i => i.toLowerCase().includes('garlic'))) {
+      ingredientList.push({ name: 'garlic', amount: '3', unit: 'cloves' });
+    }
+    ingredientList.push({ name: 'soy sauce', amount: '2', unit: 'tbsp' });
+    ingredientList.push({ name: 'cooking oil', amount: '2', unit: 'tbsp' });
+    
     suggestions.push({
       title: '🍳 Savory Stir-Fry Bowl',
-      ingredients: ingredients.filter(i => 
-        ['chicken', 'beef', 'tofu', 'tomato', 'onion', 'pepper', 'carrot', 'garlic', 'rice'].some(x => 
-          i.toLowerCase().includes(x)
-        )
-      ).slice(0, 6),
+      ingredients: ingredientList,
       instructions: 'Cut protein into bite-sized pieces and season. Heat oil in a wok or large pan over high heat. Stir-fry protein until golden, then add vegetables. Season with soy sauce, garlic, and your favorite spices. Serve over rice or noodles.',
       detailedSteps: [
         'Step 1: Cut your protein (chicken, beef, or tofu) into bite-sized pieces and season with salt, pepper, and your favorite spices.',
