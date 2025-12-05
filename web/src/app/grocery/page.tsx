@@ -163,10 +163,110 @@ function GroceryPageContent() {
   const checkedCount = activeList?.items.filter(i => i.isChecked).length || 0;
   const totalCount = activeList?.items.length || 0;
 
+  const formatListForSharing = (list: GroceryList): string => {
+    const checkedItems = list.items.filter(i => i.isChecked);
+    const uncheckedItems = list.items.filter(i => !i.isChecked);
+    
+    let text = `🛒 ${list.title}\n\n`;
+    
+    if (uncheckedItems.length > 0) {
+      text += '📝 To Buy:\n';
+      uncheckedItems.forEach((item, index) => {
+        const qty = item.quantity ? `${item.quantity} ${item.unit || ''}`.trim() : '';
+        const note = item.note ? ` (${item.note})` : '';
+        text += `${index + 1}. ${item.name}${qty ? ` - ${qty}` : ''}${note}\n`;
+      });
+      text += '\n';
+    }
+    
+    if (checkedItems.length > 0) {
+      text += '✅ Already Got:\n';
+      checkedItems.forEach((item, index) => {
+        const qty = item.quantity ? `${item.quantity} ${item.unit || ''}`.trim() : '';
+        const note = item.note ? ` (${item.note})` : '';
+        text += `${index + 1}. ${item.name}${qty ? ` - ${qty}` : ''}${note}\n`;
+      });
+    }
+    
+    text += `\n---\nShared from SmartPantry`;
+    return text;
+  };
+
+  const copyListToClipboard = async () => {
+    if (!activeList) return;
+    
+    try {
+      const text = formatListForSharing(activeList);
+      await navigator.clipboard.writeText(text);
+      
+      // Show success feedback
+      const button = document.querySelector('[data-copy-button]') as HTMLElement;
+      if (button) {
+        const originalText = button.textContent;
+        button.textContent = '✓ Copied!';
+        button.style.opacity = '1';
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Failed to copy:', error);
+      alert('Failed to copy list. Please try again.');
+    }
+  };
+
+  const shareList = async () => {
+    if (!activeList) return;
+    
+    const text = formatListForSharing(activeList);
+    
+    // Try Web Share API first (mobile-friendly)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: activeList.title,
+          text: text,
+        });
+        return;
+      } catch (error: any) {
+        // User cancelled or share failed, fall back to copy
+        if (error.name !== 'AbortError') {
+          console.error('Share failed:', error);
+        }
+      }
+    }
+    
+    // Fallback to copy
+    await copyListToClipboard();
+  };
+
   return (
     <>
       <header className="page-header">
-        <h1 className="page-title">Grocery Lists 🛒</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="page-title">Grocery Lists 🛒</h1>
+          {activeList && (
+            <div className="flex gap-2">
+              <button
+                data-copy-button
+                onClick={copyListToClipboard}
+                className="btn btn-sm btn-secondary"
+                title="Copy list"
+                aria-label="Copy grocery list"
+              >
+                📋 Copy
+              </button>
+              <button
+                onClick={shareList}
+                className="btn btn-sm btn-secondary"
+                title="Share list"
+                aria-label="Share grocery list"
+              >
+                📤 Share
+              </button>
+            </div>
+          )}
+        </div>
         <p className="page-subtitle">
           {activeList ? `${checkedCount}/${totalCount} items checked` : `${lists.length} lists`}
         </p>
