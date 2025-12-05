@@ -120,9 +120,28 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
     // Check if response is ok before parsing JSON
     if (!res.ok) {
-      const errorText = await res.text();
-      console.error('API Error Response:', res.status, errorText);
-      throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+      let errorMessage = `API request failed: ${res.status} ${res.statusText}`;
+      try {
+        const errorText = await res.text();
+        if (errorText) {
+          try {
+            const errorJson = JSON.parse(errorText);
+            if (errorJson.error?.message) {
+              errorMessage = errorJson.error.message;
+            } else if (errorJson.message) {
+              errorMessage = errorJson.message;
+            }
+          } catch {
+            // If not JSON, use the text as is
+            if (errorText.length < 200) {
+              errorMessage = errorText;
+            }
+          }
+        }
+      } catch (e) {
+        // If we can't read the error, use default message
+      }
+      throw new Error(errorMessage);
     }
 
     const json = await res.json() as ApiResponse<T>;

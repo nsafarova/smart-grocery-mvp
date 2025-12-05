@@ -51,9 +51,18 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = (userEmail: string) => {
+  const handleQuickLogin = async (userEmail: string) => {
     setEmail(userEmail);
-    handleSubmit(new Event('submit') as any);
+    setError('');
+    setLoading(true);
+    
+    try {
+      await login(userEmail.trim());
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check your email.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
