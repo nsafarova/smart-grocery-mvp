@@ -56,7 +56,52 @@ function MealsPageContent() {
 
   const openDetailModal = (meal: MealSuggestion) => {
     setSelectedMeal(meal);
+    setRecipeMultiplier(1);
     setShowDetailModal(true);
+  };
+
+  const parseAmount = (amount: string): number => {
+    if (!amount) return 0;
+    // Handle fractions like "1/2", "1/4", "3/4"
+    if (amount.includes('/')) {
+      const parts = amount.split('/');
+      if (parts.length === 2) {
+        return parseFloat(parts[0]) / parseFloat(parts[1]);
+      }
+    }
+    return parseFloat(amount) || 0;
+  };
+
+  const formatAmount = (amount: number): string => {
+    // Check if it's a whole number
+    if (amount % 1 === 0) {
+      return amount.toString();
+    }
+    // Check for common fractions
+    const tolerance = 0.01;
+    if (Math.abs(amount - 0.25) < tolerance) return '1/4';
+    if (Math.abs(amount - 0.33) < tolerance) return '1/3';
+    if (Math.abs(amount - 0.5) < tolerance) return '1/2';
+    if (Math.abs(amount - 0.67) < tolerance) return '2/3';
+    if (Math.abs(amount - 0.75) < tolerance) return '3/4';
+    // Otherwise return decimal
+    return amount.toFixed(2).replace(/\.?0+$/, '');
+  };
+
+  const scaleIngredient = (ingredient: string | Ingredient, multiplier: number): string => {
+    if (typeof ingredient === 'string') {
+      return ingredient;
+    }
+    
+    if (!ingredient.amount) {
+      return ingredient.name;
+    }
+    
+    const originalAmount = parseAmount(ingredient.amount);
+    const scaledAmount = originalAmount * multiplier;
+    const formattedAmount = formatAmount(scaledAmount);
+    
+    return `${formattedAmount} ${ingredient.unit || ''} ${ingredient.name}`.trim();
   };
 
   const saveMeal = async () => {
