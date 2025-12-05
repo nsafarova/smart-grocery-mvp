@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api, MealSuggestion, MealIdea } from '@/lib/api';
+import { api, MealSuggestion, MealIdea, Ingredient } from '@/lib/api';
 import Modal from '@/components/Modal';
 import { useUser } from '@/contexts/UserContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -17,6 +17,7 @@ function MealsPageContent() {
   const [mealToSave, setMealToSave] = useState<MealSuggestion | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<MealSuggestion | null>(null);
+  const [recipeMultiplier, setRecipeMultiplier] = useState(1);
 
   useEffect(() => {
     if (user) {
@@ -317,16 +318,46 @@ function MealsPageContent() {
               )}
             </div>
 
+            {/* Recipe Multiplier */}
+            <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--color-bg-muted)' }}>
+              <span className="text-sm font-medium">Servings:</span>
+              <div className="flex gap-2">
+                {[1, 2, 3].map((mult) => (
+                  <button
+                    key={mult}
+                    onClick={() => setRecipeMultiplier(mult)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      recipeMultiplier === mult
+                        ? 'btn btn-primary'
+                        : 'btn btn-secondary'
+                    }`}
+                  >
+                    {mult}x
+                  </button>
+                ))}
+              </div>
+              {selectedMeal.servings && (
+                <span className="text-sm opacity-70 ml-auto">
+                  {recipeMultiplier === 1 
+                    ? selectedMeal.servings 
+                    : `${recipeMultiplier}x ${selectedMeal.servings}`}
+                </span>
+              )}
+            </div>
+
             {/* Ingredients */}
             <div>
               <h3 className="font-semibold text-lg mb-3">📋 Ingredients</h3>
               <div className="space-y-2">
-                {selectedMeal.ingredients.map((ing, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    <span>{ing}</span>
-                  </div>
-                ))}
+                {selectedMeal.ingredients.map((ing, i) => {
+                  const displayText = scaleIngredient(ing, recipeMultiplier);
+                  return (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span>{displayText}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

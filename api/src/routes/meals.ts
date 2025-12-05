@@ -12,9 +12,15 @@ const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
+interface Ingredient {
+  name: string;
+  amount: string;
+  unit?: string;
+}
+
 interface MealSuggestion {
   title: string;
-  ingredients: string[];
+  ingredients: string[] | Ingredient[];
   instructions: string;
   cookTime?: string;
   difficulty?: string;
@@ -61,25 +67,31 @@ ${constraintsText}
 
 For each meal, provide:
 1. A creative, appetizing title
-2. List of ingredients from the available list (plus common pantry staples if needed)
+2. List of ingredients with SPECIFIC AMOUNTS and UNITS (e.g., "2 cups rice", "1 lb chicken", "3 cloves garlic")
 3. Brief cooking instructions (3-4 sentences) - keep this SHORT for the preview
 4. Detailed step-by-step instructions (numbered list, 5-8 steps) - for the full recipe
 5. Estimated cook time
 6. Difficulty level (Easy/Medium/Hard)
-7. Number of servings
+7. Number of servings (be specific, e.g., "2 servings" or "4 servings")
 8. Optional cooking tips
 9. Optional nutrition info (calories, protein, carbs, fat per serving)
+
+IMPORTANT: For ingredients, provide an array of objects with "name", "amount", and "unit" fields. Amounts should be specific and measurable.
 
 Respond ONLY with valid JSON in this exact format:
 [
   {
     "title": "Meal Name",
-    "ingredients": ["ingredient1", "ingredient2"],
+    "ingredients": [
+      {"name": "chicken breast", "amount": "1", "unit": "lb"},
+      {"name": "rice", "amount": "2", "unit": "cups"},
+      {"name": "garlic", "amount": "3", "unit": "cloves"}
+    ],
     "instructions": "Brief 3-4 sentence summary for preview...",
     "detailedSteps": ["Step 1: ...", "Step 2: ...", "Step 3: ..."],
     "cookTime": "30 minutes",
     "difficulty": "Easy",
-    "servings": "2-3 servings",
+    "servings": "2 servings",
     "tips": "Optional cooking tip or variation",
     "nutrition": {
       "calories": "~350",
@@ -172,7 +184,7 @@ function generateFallbackSuggestions(
       ],
       cookTime: '25 minutes',
       difficulty: 'Easy',
-      servings: '2-3 servings',
+      servings: '2 servings',
       tips: 'For best results, make sure your pan is very hot before adding ingredients. Don\'t overcrowd the pan - cook in batches if needed.',
     });
   }
@@ -182,9 +194,25 @@ function generateFallbackSuggestions(
       ['cheese', 'tomato', 'onion', 'pepper', 'spinach', 'mushroom'].some(x => i.toLowerCase().includes(x))
     )].slice(0, 5);
     
+    const omeletteIngredients: Ingredient[] = [
+      { name: 'eggs', amount: '3', unit: 'large' },
+      { name: 'milk', amount: '2', unit: 'tbsp' },
+      { name: 'butter', amount: '1', unit: 'tbsp' },
+    ];
+    
+    if (eggIngredients.some(i => i.toLowerCase().includes('cheese'))) {
+      omeletteIngredients.push({ name: 'cheese', amount: '1/4', unit: 'cup shredded' });
+    }
+    if (eggIngredients.some(i => i.toLowerCase().includes('tomato'))) {
+      omeletteIngredients.push({ name: 'tomato', amount: '1', unit: 'small diced' });
+    }
+    if (eggIngredients.some(i => i.toLowerCase().includes('spinach'))) {
+      omeletteIngredients.push({ name: 'spinach', amount: '1/2', unit: 'cup' });
+    }
+    
     suggestions.push({
       title: '🥚 Fluffy Veggie Omelette',
-      ingredients: eggIngredients,
+      ingredients: omeletteIngredients,
       instructions: 'Beat eggs with a splash of milk, salt, and pepper. Heat butter in a non-stick pan over medium heat. Pour in eggs and let set slightly, then add your fillings to one half. Fold over and cook until just set. Serve with toast.',
       detailedSteps: [
         'Step 1: Crack 2-3 eggs into a bowl, add 1-2 tablespoons of milk, and season with salt and pepper. Beat until well combined.',
@@ -196,7 +224,7 @@ function generateFallbackSuggestions(
       ],
       cookTime: '15 minutes',
       difficulty: 'Easy',
-      servings: '1-2 servings',
+      servings: '1 serving',
       tips: 'The key to a fluffy omelette is low heat and patience. Don\'t rush the cooking process!',
     });
   }
@@ -209,9 +237,31 @@ function generateFallbackSuggestions(
     ).slice(0, 6);
     
     if (saladIngredients.length >= 2) {
+      const saladIngredientList: Ingredient[] = [];
+      if (saladIngredients.some(i => i.toLowerCase().includes('lettuce'))) {
+        saladIngredientList.push({ name: 'lettuce', amount: '4', unit: 'cups chopped' });
+      }
+      if (saladIngredients.some(i => i.toLowerCase().includes('tomato'))) {
+        saladIngredientList.push({ name: 'tomato', amount: '2', unit: 'medium' });
+      }
+      if (saladIngredients.some(i => i.toLowerCase().includes('cucumber'))) {
+        saladIngredientList.push({ name: 'cucumber', amount: '1', unit: 'medium' });
+      }
+      if (saladIngredients.some(i => i.toLowerCase().includes('pepper'))) {
+        saladIngredientList.push({ name: 'bell pepper', amount: '1', unit: 'medium' });
+      }
+      if (saladIngredients.some(i => i.toLowerCase().includes('onion'))) {
+        saladIngredientList.push({ name: 'onion', amount: '1/4', unit: 'cup sliced' });
+      }
+      if (saladIngredients.some(i => i.toLowerCase().includes('carrot'))) {
+        saladIngredientList.push({ name: 'carrot', amount: '1', unit: 'medium' });
+      }
+      saladIngredientList.push({ name: 'olive oil', amount: '3', unit: 'tbsp' });
+      saladIngredientList.push({ name: 'lemon juice', amount: '1', unit: 'tbsp' });
+      
       suggestions.push({
         title: '🥗 Fresh Garden Salad',
-        ingredients: saladIngredients,
+        ingredients: saladIngredientList.length > 0 ? saladIngredientList : saladIngredients,
         instructions: 'Wash and chop all vegetables into bite-sized pieces. Combine in a large bowl. Make a simple dressing with olive oil, lemon juice, salt, pepper, and herbs. Toss everything together and serve immediately.',
         detailedSteps: [
           'Step 1: Wash all vegetables thoroughly under cold running water and pat dry.',
@@ -223,7 +273,7 @@ function generateFallbackSuggestions(
         ],
         cookTime: '10 minutes',
         difficulty: 'Easy',
-        servings: '2-4 servings',
+        servings: '2 servings',
         tips: 'Add the dressing just before serving to keep the vegetables crisp. You can prepare the vegetables ahead of time and store them in the fridge.',
       });
     }

@@ -62,9 +62,15 @@ export interface MealIdea {
   createdAt: string;
 }
 
+export interface Ingredient {
+  name: string;
+  amount: string;
+  unit?: string;
+}
+
 export interface MealSuggestion {
   title: string;
-  ingredients: string[];
+  ingredients: string[] | Ingredient[];
   instructions: string;
   cookTime?: string;
   difficulty?: string;
