@@ -12,7 +12,7 @@ function MealsPageContent() {
   const [savedMeals, setSavedMeals] = useState<MealIdea[]>([]);
   const [loading, setLoading] = useState(false);
   const [preferences, setPreferences] = useState('');
-  const [activeTab, setActiveTab] = useState<'ideas' | 'saved'>('ideas');
+  const [activeTab, setActiveTab] = useState<'ideas' | 'saved' | 'plan'>('ideas');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [mealToSave, setMealToSave] = useState<MealSuggestion | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -156,6 +156,12 @@ function MealsPageContent() {
             className={`btn flex-1 ${activeTab === 'saved' ? 'btn-primary' : 'btn-secondary'}`}
           >
             💾 Saved ({savedMeals.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('plan')}
+            className={`btn flex-1 ${activeTab === 'plan' ? 'btn-primary' : 'btn-secondary'}`}
+          >
+            📅 Plan
           </button>
         </div>
 
