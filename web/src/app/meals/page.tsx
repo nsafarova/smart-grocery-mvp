@@ -289,6 +289,21 @@ function MealsPageContent() {
               </div>
             )}
           </>
+        ) : activeTab === 'plan' ? (
+          /* Weekly Meal Plan */
+          <div className="text-center py-8">
+            <div className="icon text-6xl mb-4">📅</div>
+            <h2 className="font-semibold text-lg mb-2">Weekly Meal Planning</h2>
+            <p className="text-sm opacity-70 mb-6">
+              Plan your week with saved meal ideas
+            </p>
+            <button
+              className="btn btn-primary"
+              onClick={() => window.location.href = '/meal-plan'}
+            >
+              Open Weekly Planner
+            </button>
+          </div>
         ) : (
           /* Saved meals */
           savedMeals.length === 0 ? (
