@@ -15,6 +15,8 @@ function MealsPageContent() {
   const [activeTab, setActiveTab] = useState<'ideas' | 'saved'>('ideas');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [mealToSave, setMealToSave] = useState<MealSuggestion | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<MealSuggestion | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -49,6 +51,11 @@ function MealsPageContent() {
   const openSaveModal = (meal: MealSuggestion) => {
     setMealToSave(meal);
     setShowSaveModal(true);
+  };
+
+  const openDetailModal = (meal: MealSuggestion) => {
+    setSelectedMeal(meal);
+    setShowDetailModal(true);
   };
 
   const saveMeal = async () => {
@@ -199,7 +206,15 @@ function MealsPageContent() {
                       <div className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>
                         Instructions:
                       </div>
-                      <p className="text-sm">{meal.instructions}</p>
+                      <p className="text-sm line-clamp-3">{meal.instructions}</p>
+                      {meal.instructions && meal.instructions.length > 150 && (
+                        <button
+                          className="btn btn-sm btn-outline mt-2"
+                          onClick={() => openDetailModal(meal)}
+                        >
+                          📖 Read More
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -265,6 +280,136 @@ function MealsPageContent() {
               </button>
               <button className="btn btn-primary flex-1" onClick={saveMeal}>
                 💾 Save Meal
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Detailed Recipe Modal */}
+      <Modal
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        title={selectedMeal?.title || 'Recipe Details'}
+      >
+        {selectedMeal && (
+          <div className="space-y-6 max-h-[80vh] overflow-y-auto">
+            {/* Header Info */}
+            <div className="flex flex-wrap gap-2">
+              {selectedMeal.cookTime && (
+                <span className="tag tag-success">⏱️ {selectedMeal.cookTime}</span>
+              )}
+              {selectedMeal.difficulty && (
+                <span className="tag" style={{ 
+                  background: selectedMeal.difficulty === 'Easy' ? 'rgba(129, 178, 154, 0.15)' : 
+                             selectedMeal.difficulty === 'Medium' ? 'rgba(244, 162, 97, 0.15)' : 
+                             'rgba(231, 111, 81, 0.15)',
+                  color: selectedMeal.difficulty === 'Easy' ? '#5A9B7A' : 
+                         selectedMeal.difficulty === 'Medium' ? '#D68A4E' : '#D15A3E'
+                }}>
+                  {selectedMeal.difficulty === 'Easy' ? '🟢' : selectedMeal.difficulty === 'Medium' ? '🟡' : '🔴'} {selectedMeal.difficulty}
+                </span>
+              )}
+              {selectedMeal.servings && (
+                <span className="tag" style={{ background: 'var(--color-bg-muted)' }}>
+                  👥 {selectedMeal.servings}
+                </span>
+              )}
+            </div>
+
+            {/* Ingredients */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3">📋 Ingredients</h3>
+              <div className="space-y-2">
+                {selectedMeal.ingredients.map((ing, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="text-primary mt-1">•</span>
+                    <span>{ing}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Detailed Steps */}
+            {selectedMeal.detailedSteps && selectedMeal.detailedSteps.length > 0 ? (
+              <div>
+                <h3 className="font-semibold text-lg mb-3">👨‍🍳 Instructions</h3>
+                <div className="space-y-3">
+                  {selectedMeal.detailedSteps.map((step, i) => (
+                    <div key={i} className="flex gap-3">
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
+                        {i + 1}
+                      </span>
+                      <p className="flex-1 text-sm leading-relaxed">{step.replace(/^Step \d+:\s*/i, '')}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <h3 className="font-semibold text-lg mb-3">👨‍🍳 Instructions</h3>
+                <p className="text-sm leading-relaxed whitespace-pre-line">{selectedMeal.instructions}</p>
+              </div>
+            )}
+
+            {/* Tips */}
+            {selectedMeal.tips && (
+              <div className="p-4 rounded-2xl" style={{ background: 'rgba(129, 178, 154, 0.1)' }}>
+                <h3 className="font-semibold mb-2">💡 Pro Tip</h3>
+                <p className="text-sm">{selectedMeal.tips}</p>
+              </div>
+            )}
+
+            {/* Nutrition Info */}
+            {selectedMeal.nutrition && (
+              <div>
+                <h3 className="font-semibold text-lg mb-3">📊 Nutrition (per serving)</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {selectedMeal.nutrition.calories && (
+                    <div className="p-3 rounded-xl" style={{ background: 'var(--color-bg-muted)' }}>
+                      <div className="text-xs opacity-70">Calories</div>
+                      <div className="font-semibold">{selectedMeal.nutrition.calories}</div>
+                    </div>
+                  )}
+                  {selectedMeal.nutrition.protein && (
+                    <div className="p-3 rounded-xl" style={{ background: 'var(--color-bg-muted)' }}>
+                      <div className="text-xs opacity-70">Protein</div>
+                      <div className="font-semibold">{selectedMeal.nutrition.protein}</div>
+                    </div>
+                  )}
+                  {selectedMeal.nutrition.carbs && (
+                    <div className="p-3 rounded-xl" style={{ background: 'var(--color-bg-muted)' }}>
+                      <div className="text-xs opacity-70">Carbs</div>
+                      <div className="font-semibold">{selectedMeal.nutrition.carbs}</div>
+                    </div>
+                  )}
+                  {selectedMeal.nutrition.fat && (
+                    <div className="p-3 rounded-xl" style={{ background: 'var(--color-bg-muted)' }}>
+                      <div className="text-xs opacity-70">Fat</div>
+                      <div className="font-semibold">{selectedMeal.nutrition.fat}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
+              <button 
+                className="btn btn-secondary flex-1" 
+                onClick={() => setShowDetailModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                className="btn btn-primary flex-1" 
+                onClick={() => {
+                  setMealToSave(selectedMeal);
+                  setShowDetailModal(false);
+                  setShowSaveModal(true);
+                }}
+              >
+                💾 Save Recipe
               </button>
             </div>
           </div>

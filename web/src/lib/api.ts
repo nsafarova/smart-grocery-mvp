@@ -68,6 +68,15 @@ export interface MealSuggestion {
   instructions: string;
   cookTime?: string;
   difficulty?: string;
+  servings?: string;
+  detailedSteps?: string[];
+  tips?: string;
+  nutrition?: {
+    calories?: string;
+    protein?: string;
+    carbs?: string;
+    fat?: string;
+  };
 }
 
 export interface Notification {

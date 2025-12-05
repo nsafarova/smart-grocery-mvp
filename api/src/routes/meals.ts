@@ -18,6 +18,15 @@ interface MealSuggestion {
   instructions: string;
   cookTime?: string;
   difficulty?: string;
+  servings?: string;
+  detailedSteps?: string[];
+  tips?: string;
+  nutrition?: {
+    calories?: string;
+    protein?: string;
+    carbs?: string;
+    fat?: string;
+  };
 }
 
 // AI-powered meal suggestion using OpenAI
@@ -53,18 +62,31 @@ ${constraintsText}
 For each meal, provide:
 1. A creative, appetizing title
 2. List of ingredients from the available list (plus common pantry staples if needed)
-3. Brief cooking instructions (3-4 sentences)
-4. Estimated cook time
-5. Difficulty level (Easy/Medium/Hard)
+3. Brief cooking instructions (3-4 sentences) - keep this SHORT for the preview
+4. Detailed step-by-step instructions (numbered list, 5-8 steps) - for the full recipe
+5. Estimated cook time
+6. Difficulty level (Easy/Medium/Hard)
+7. Number of servings
+8. Optional cooking tips
+9. Optional nutrition info (calories, protein, carbs, fat per serving)
 
 Respond ONLY with valid JSON in this exact format:
 [
   {
     "title": "Meal Name",
     "ingredients": ["ingredient1", "ingredient2"],
-    "instructions": "Step by step instructions...",
+    "instructions": "Brief 3-4 sentence summary for preview...",
+    "detailedSteps": ["Step 1: ...", "Step 2: ...", "Step 3: ..."],
     "cookTime": "30 minutes",
-    "difficulty": "Easy"
+    "difficulty": "Easy",
+    "servings": "2-3 servings",
+    "tips": "Optional cooking tip or variation",
+    "nutrition": {
+      "calories": "~350",
+      "protein": "~25g",
+      "carbs": "~40g",
+      "fat": "~12g"
+    }
   }
 ]`;
 
@@ -140,8 +162,18 @@ function generateFallbackSuggestions(
         )
       ).slice(0, 6),
       instructions: 'Cut protein into bite-sized pieces and season. Heat oil in a wok or large pan over high heat. Stir-fry protein until golden, then add vegetables. Season with soy sauce, garlic, and your favorite spices. Serve over rice or noodles.',
+      detailedSteps: [
+        'Step 1: Cut your protein (chicken, beef, or tofu) into bite-sized pieces and season with salt, pepper, and your favorite spices.',
+        'Step 2: Heat 2 tablespoons of oil in a wok or large pan over high heat until shimmering.',
+        'Step 3: Add the protein and stir-fry for 3-4 minutes until golden brown and cooked through. Remove and set aside.',
+        'Step 4: Add a bit more oil if needed, then add chopped vegetables (onions, peppers, carrots) and stir-fry for 2-3 minutes until crisp-tender.',
+        'Step 5: Return the protein to the pan, add 2-3 tablespoons of soy sauce, minced garlic, and any additional seasonings.',
+        'Step 6: Toss everything together and cook for 1 more minute. Serve hot over cooked rice or noodles.',
+      ],
       cookTime: '25 minutes',
-      difficulty: 'Easy'
+      difficulty: 'Easy',
+      servings: '2-3 servings',
+      tips: 'For best results, make sure your pan is very hot before adding ingredients. Don\'t overcrowd the pan - cook in batches if needed.',
     });
   }
 
@@ -154,8 +186,18 @@ function generateFallbackSuggestions(
       title: '🥚 Fluffy Veggie Omelette',
       ingredients: eggIngredients,
       instructions: 'Beat eggs with a splash of milk, salt, and pepper. Heat butter in a non-stick pan over medium heat. Pour in eggs and let set slightly, then add your fillings to one half. Fold over and cook until just set. Serve with toast.',
+      detailedSteps: [
+        'Step 1: Crack 2-3 eggs into a bowl, add 1-2 tablespoons of milk, and season with salt and pepper. Beat until well combined.',
+        'Step 2: Heat 1 tablespoon of butter in a non-stick pan over medium-low heat until melted.',
+        'Step 3: Pour the egg mixture into the pan and let it cook undisturbed for 30 seconds until the edges start to set.',
+        'Step 4: Gently lift the edges with a spatula and tilt the pan to let uncooked egg flow to the edges.',
+        'Step 5: Once the bottom is set but the top is still slightly runny, add your fillings (cheese, vegetables) to one half of the omelette.',
+        'Step 6: Carefully fold the other half over the fillings and cook for 1 more minute. Slide onto a plate and serve immediately with toast.',
+      ],
       cookTime: '15 minutes',
-      difficulty: 'Easy'
+      difficulty: 'Easy',
+      servings: '1-2 servings',
+      tips: 'The key to a fluffy omelette is low heat and patience. Don\'t rush the cooking process!',
     });
   }
 
@@ -171,8 +213,18 @@ function generateFallbackSuggestions(
         title: '🥗 Fresh Garden Salad',
         ingredients: saladIngredients,
         instructions: 'Wash and chop all vegetables into bite-sized pieces. Combine in a large bowl. Make a simple dressing with olive oil, lemon juice, salt, pepper, and herbs. Toss everything together and serve immediately.',
+        detailedSteps: [
+          'Step 1: Wash all vegetables thoroughly under cold running water and pat dry.',
+          'Step 2: Chop vegetables into bite-sized pieces - aim for uniform sizes for even eating.',
+          'Step 3: Combine all chopped vegetables in a large salad bowl.',
+          'Step 4: In a small bowl, whisk together 3 tablespoons olive oil, 1 tablespoon lemon juice, salt, pepper, and your favorite herbs (basil, oregano, or parsley work well).',
+          'Step 5: Drizzle the dressing over the salad and toss gently to coat all ingredients.',
+          'Step 6: Serve immediately for the freshest taste. Add cheese, nuts, or croutons as desired.',
+        ],
         cookTime: '10 minutes',
-        difficulty: 'Easy'
+        difficulty: 'Easy',
+        servings: '2-4 servings',
+        tips: 'Add the dressing just before serving to keep the vegetables crisp. You can prepare the vegetables ahead of time and store them in the fridge.',
       });
     }
   }
